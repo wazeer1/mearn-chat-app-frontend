@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState,useRef, useEffect } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import '../assets/css/message.css'
@@ -7,6 +7,7 @@ import { appContext } from "../context/appContext";
 function MessageForm() {
     const user = useSelector((state)=>state.user)
     const [message,setMessage] = useState("");
+    const messageEndRef = useRef(null);
     // const user = useSelector((state)=>user.state)
     const {
         socket,
@@ -22,6 +23,9 @@ function MessageForm() {
         newMessages,
         setMessages,
     } = useContext(appContext);
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
     function getFormattedDate(){
         const date = new Date()
         const year = date.getFullYear()
@@ -31,6 +35,9 @@ function MessageForm() {
         let day = date.getDate().toString()
         day = day.length > 1 ? day : "0" + day;
         return month + "/" + day + "/" + year
+    }
+    function scrollToBottom() {
+        messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
     function handleSubmit(e) {
         e.preventDefault();
@@ -57,10 +64,18 @@ function MessageForm() {
                     <div key={idx}>
                         <p className="alert alert-info text-center message-date-indicator">{date}</p>
                         {messagesByDate?.map(({content, time, from:sender},msgIdx)=>(
-                            <div className="message" key={msgIdx}>
-                                <p>{content}</p>
+                            <div className={sender?.email == user?.email ? "message" : "incoming-message"} key={msgIdx}>
+                                <div className="message-inner">
+                                        <div className="d-flex align-items-center mb-3">
+                                            <img src={sender.picture} style={{ width: 35, height: 35, objectFit: "cover", borderRadius: "50%", marginRight: 10 }} />
+                                            <p className="message-sender">{sender._id == user?._id ? "You" : sender.name}</p>
+                                        </div>
+                                        <p className="message-content">{content}</p>
+                                        <p className="message-timestamp-left">{time}</p>
+                                    </div>
                             </div>
                         ))}
+                        <div ref={messageEndRef} />
                     </div>
                 ))}
             </div>
